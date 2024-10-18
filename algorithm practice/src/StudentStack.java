@@ -1,0 +1,43 @@
+public class StudentStack {
+    private Student[] stack;
+    private int top;
+
+    public StudentStack(int capacity) {
+        stack = new Student[capacity];
+        top = -1;
+    }
+
+    public void push(Student student) {
+        if (top == stack.length - 1) {
+            System.out.println("Stack is full. Cannot push.");
+        } else {
+            stack[++top] = student;
+        }
+    }
+
+    public Student pop() {
+        if (isEmpty()) {
+            System.out.println("Stack is empty. Cannot pop.");
+            return null;
+        } else {
+            return stack[top--];
+        }
+    }
+
+    public Student peek() {
+        if (isEmpty()) {
+            System.out.println("Stack is empty. Cannot peek.");
+            return null;
+        } else {
+            return stack[top];
+        }
+    }
+
+    public boolean isEmpty() {
+        return top == -1;
+    }
+
+    public int size() {
+        return top + 1;
+    }
+}
