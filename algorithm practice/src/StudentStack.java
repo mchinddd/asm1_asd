@@ -24,20 +24,16 @@ public class StudentStack {
         }
     }
 
-    public Student peek() {
-        if (isEmpty()) {
-            System.out.println("Stack is empty. Cannot peek.");
-            return null;
-        } else {
-            return stack[top];
-        }
-    }
-
     public boolean isEmpty() {
         return top == -1;
     }
 
     public int size() {
         return top + 1;
+    }
+
+    // New method to get the capacity of the stack
+    public int getCapacity() {
+        return stack.length;
     }
 }

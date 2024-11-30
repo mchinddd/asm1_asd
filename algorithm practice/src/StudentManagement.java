@@ -1,3 +1,4 @@
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class StudentManagement {
@@ -18,12 +19,21 @@ public class StudentManagement {
             System.out.println("7. Undo Last Edit");
             System.out.println("8. Exit");
             System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline
-
+            int choice = -1;
+            try {
+                choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+            } catch (InputMismatchException e) {
+                System.out.println("Error: Invalid input. Please enter a number between 1 and 8.");
+                scanner.nextLine(); // Clear invalid input
+            }
             switch (choice) {
                 case 1:
-                    addStudent();
+                    try {
+                        addStudent();
+                    } catch (IllegalStateException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
                     break;
                 case 2:
                     editStudent();
@@ -35,13 +45,31 @@ public class StudentManagement {
                     displayAllStudents();
                     break;
                 case 5:
-                    sortStudentsByMarksMergeSort();
+                    try {
+                        long startTime = System.nanoTime();
+                        sortStudentsByMarksMergeSort();
+                        long endTime = System.nanoTime();
+                        System.out.println("Execution time: " + (endTime - startTime) + " nanoseconds");
+                    } catch (IllegalStateException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
                     break;
                 case 6:
-                    sortStudentsByMarksBubbleSort();
+                    try {
+                        long startTime = System.nanoTime();
+                        sortStudentsByMarksBubbleSort();
+                        long endTime = System.nanoTime();
+                        System.out.println("Execution time: " + (endTime - startTime) + " nanoseconds");
+                    } catch (IllegalStateException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
                     break;
                 case 7:
-                    undoLastEdit();
+                    try {
+                        undoLastEdit();
+                    } catch (IllegalStateException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
                     break;
                 case 8:
                     System.exit(0);
@@ -53,34 +81,72 @@ public class StudentManagement {
     }
 
     private static void addStudent() {
-        System.out.print("Enter student ID: ");
-        String id = scanner.nextLine();
-        System.out.print("Enter student name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter student marks: ");
-        double marks = scanner.nextDouble();
-        scanner.nextLine();  // Consume newline
-        students[studentCount++] = new Student(id, name, marks);
-        System.out.println("Student added successfully.");
+        if (studentCount >= students.length) {
+            throw new IllegalStateException("Student list is full. Cannot add more students.");
+        }
+        try {
+            System.out.print("Enter student ID: ");
+            String id = scanner.nextLine();
+            if (id.isEmpty()) {
+                throw new IllegalArgumentException("Student ID cannot be empty.");
+            }
+
+            System.out.print("Enter student name: ");
+            String name = scanner.nextLine();
+            if (name.isEmpty()) {
+                throw new IllegalArgumentException("Student name cannot be empty.");
+            }
+
+            System.out.print("Enter student marks: ");
+            double marks = scanner.nextDouble();
+            scanner.nextLine(); // Consume newline
+            if (marks < 0 || marks > 10) {
+                throw new IllegalArgumentException("Marks must be between 0 and 10.");
+            }
+            students[studentCount++] = new Student(id, name, marks);
+            System.out.println("Student added successfully.");
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input format. Please try again.");
+            scanner.next(); // Clear invalid input
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
     }
 
     private static void editStudent() {
         System.out.print("Enter student ID to edit: ");
         String id = scanner.nextLine();
         Student student = findStudentByID(id);
+
         if (student != null) {
-            // Push current student state to history stack before editing
-            editHistory.push(new Student(student.getStudentID(), student.getName(), student.getMarks()));
+            // Kiểm tra stack trước khi lưu lịch sử chỉnh sửa
+            if (editHistory.size() >= editHistory.getCapacity()) {
+                System.out.println("Error: Edit history stack is full. Cannot save history for this edit.");
+            } else {
+                editHistory.push(new Student(student.getStudentID(), student.getName(), student.getMarks()));
+            }
 
-            System.out.print("Enter new name: ");
-            String name = scanner.nextLine();
-            System.out.print("Enter new marks: ");
-            double marks = scanner.nextDouble();
-            scanner.nextLine();  // Consume newline
+            try {
+                System.out.print("Enter new name: ");
+                String name = scanner.nextLine();
+                System.out.print("Enter new marks: ");
+                double marks = scanner.nextDouble();
+                scanner.nextLine(); // Consume newline
 
-            student.setName(name);
-            student.setMarks(marks);
-            System.out.println("Student updated successfully.");
+                if (marks < 0 || marks > 10) {
+                    throw new IllegalArgumentException("Marks must be between 0 and 10.");
+                }
+
+                student.setName(name);
+                student.setMarks(marks);
+                System.out.println("Student updated successfully.");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Input error: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Unexpected error occurred while editing student.");
+            }
         } else {
             System.out.println("Student not found.");
         }
@@ -92,6 +158,7 @@ public class StudentManagement {
         for (int i = 0; i < studentCount; i++) {
             if (students[i].getStudentID().equals(id)) {
                 students[i] = students[--studentCount];  // Replace with last student
+                students[studentCount] = null;
                 System.out.println("Student deleted successfully.");
                 return;
             }
@@ -131,7 +198,7 @@ public class StudentManagement {
                 System.out.println("Undo successful: Student restored.");
             }
         } else {
-            System.out.println("No edits to undo.");
+            throw new IllegalStateException("No edits to undo.");
         }
     }
 
@@ -140,6 +207,10 @@ public class StudentManagement {
         if (studentCount > 1) {
             mergeSort(students, 0, studentCount - 1);
             System.out.println("Students sorted by marks using Merge Sort.");
+        }
+        else{
+//            System.out.println("No students sorted by marks using Merge Sort.");
+            throw new IllegalStateException("No students available to sort.");
         }
     }
 
@@ -195,16 +266,23 @@ public class StudentManagement {
 
     // Bubble Sort for Students by Marks
     private static void sortStudentsByMarksBubbleSort() {
-        for (int i = 0; i < studentCount - 1; i++) {
-            for (int j = 0; j < studentCount - i - 1; j++) {
-                if (students[j].getMarks() > students[j + 1].getMarks()) {
-                    // Swap students[j] and students[j+1]
-                    Student temp = students[j];
-                    students[j] = students[j + 1];
-                    students[j + 1] = temp;
+        if (studentCount > 1) {
+            for (int i = 0; i < studentCount - 1; i++) {
+                for (int j = 0; j < studentCount - i - 1; j++) {
+                    if (students[j].getMarks() > students[j + 1].getMarks()) {
+                        // Swap students[j] and students[j+1]
+                        Student temp = students[j];
+                        students[j] = students[j + 1];
+                        students[j + 1] = temp;
+                    }
                 }
             }
+            System.out.println("Students sorted by marks using Bubble Sort.");
         }
-        System.out.println("Students sorted by marks using Bubble Sort.");
+        else{
+//            System.out.println("No students sorted by marks using Bubble Sort.");
+            throw new IllegalStateException("No students available to sort.");
+
+        }
     }
 }
