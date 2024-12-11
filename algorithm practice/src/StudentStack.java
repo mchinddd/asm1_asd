@@ -14,6 +14,14 @@ public class StudentStack {
             stack[++top] = student;
         }
     }
+    public Student peek() {
+        if (isEmpty()) {
+            System.out.println("Stack is empty. Cannot peek.");
+            return null;
+        } else {
+            return stack[top];
+        }
+    }
 
     public Student pop() {
         if (isEmpty()) {

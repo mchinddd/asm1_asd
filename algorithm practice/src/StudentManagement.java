@@ -114,6 +114,7 @@ public class StudentManagement {
             System.out.println("An unexpected error occurred: " + e.getMessage());
         }
     }
+    
 
     private static void editStudent() {
         System.out.print("Enter student ID to edit: ");
